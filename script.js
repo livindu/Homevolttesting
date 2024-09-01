@@ -1,4 +1,4 @@
-// Replace with your Google Sheets API key
+    // Replace with your Google Sheets API key
 const apiKey = 'AIzaSyCJUpx3d2aRxgOnbbB73WBpcZ1oI2YAauc';
 // Replace with your Google Sheets ID
 const sheetId = '14g5GswUj6mj411o2dYOPghzJthp97hfz5DZvOU3O5Ww';
@@ -7,8 +7,7 @@ const range = 'Sheet1!A1:B29';
 
 document.addEventListener('DOMContentLoaded', function() {
     fetchSheetData();
-    document.getElementById('mainBtn')?.addEventListener('click', () => showDevicePower('main'));
-    document.getElementById('combinedBtn')?.addEventListener('click', showCombinedPower);
+    document.getElementById('mainBtn')?.addEventListener('click', showmainpower);
 });
 
 // Function to fetch data from Google Sheet using Google Sheets API
@@ -46,66 +45,60 @@ function updateStatus(data) {
     document.getElementById('current').innerText = `${data.current} A`;
 }
 
-// Function to fetch data for multiple devices and update the chart
-function fetchCombinedData(devices) {
+// Existing functions for chart updates
+function fetchdata(device) {
     fetch('https://docs.google.com/spreadsheets/d/1sAMNYYz1C2wIRcYA9RqKjKGprR3Lu6DLK0xBm-Rg4EA/pub?output=csv')
         .then(response => response.text())
         .then(data => { 
-            const parsedData = processCombinedCSV(data, devices);
-            updateCombinedChart(parsedData, devices); 
+            const parsedData = processCSV(data, device);
+            updateChart(parsedData, device); 
         })
         .catch(error => console.error('Error fetching data:', error));
 }
 
-function processCombinedCSV(data, devices) {
+function processCSV(data, device) {
     const rows = data.split('\n');
     const headers = rows[0].split(',');
     const time = [];
-    const powerData = {};
-
-    devices.forEach(device => {
-        powerData[device] = [];
-    });
-
+    const power = [];
+    
     const timeIndex = headers.indexOf('time');
+    const devicePowerIndex = headers.indexOf(device + '_power');
 
     rows.slice(1).forEach(row => {
         const cols = row.split(',');
-        if (cols.length > timeIndex) {
+        if (cols.length > timeIndex && cols.length > devicePowerIndex) {
             time.push(cols[timeIndex]);
-
-            devices.forEach(device => {
-                const devicePowerIndex = headers.indexOf(device + '_power');
-                if (cols.length > devicePowerIndex) {
-                    powerData[device].push(parseFloat(cols[devicePowerIndex]));
-                }
-            });
+            power.push(parseFloat(cols[devicePowerIndex]));
         }
     });
 
-    return { time, powerData };
+    return { time, power };
 }
 
-function updateCombinedChart(data, devices) {
+function updateChart(data, device) {
     const ctx = document.getElementById('powerChart').getContext('2d');
     if (window.myChart) {
         window.myChart.destroy();
     }
 
-    const datasets = devices.map(device => ({
-        label: `${device.charAt(0).toUpperCase() + device.slice(1)} Power Consumption`,
-        data: data.powerData[device],
-        borderColor: getRandomColor(),
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        fill: true,
-        tension: 0.1
-    }));
+    const xMin = Math.min(...data.time.map(t => parseInt(t.split(':')[0]))); 
+    const xMax = Math.max(...data.time.map(t => parseInt(t.split(':')[10]))); 
+    const yMin = 0; 
+    const yMax = Math.max(...data.power) * 1.2; 
 
     window.myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: data.time,
-            datasets: datasets
+            datasets: [{
+                label: `${device.charAt(0).toUpperCase() + device.slice(1)} Power Consumption`,
+                data: data.power,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
         },
         options: {
             scales: {
@@ -113,23 +106,23 @@ function updateCombinedChart(data, devices) {
                     title: {
                         display: true,
                         text: 'Time (s)'
-                    }
+                    },
+                    min: xMin,
+                    max: xMax
                 },
                 y: {
                     title: {
                         display: true,
                         text: 'Power (W)'
-                    }
+                    },
+                    min: yMin,
+                    max: yMax
                 }
             },
             responsive: true,
             maintainAspectRatio: false
         }
     });
-}
-
-function getRandomColor() {
-    return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`;
 }
 
 function showDevicePower(device) {
@@ -140,26 +133,24 @@ function showDevicePower(device) {
     fetchdata(device);
 }
 
-function showCombinedPower() {
-    document.getElementById('deviceIframe').style.display = 'none';
-    document.getElementById('powerChart').style.display = 'block';
-    document.getElementById('chartTitle').style.display = 'block';
-    document.getElementById('chartTitle').innerText = 'Combined Power Consumption';
-    
-    const devices = ['main', 'kettle', 'fan', 'computer', 'mobile', 'iron'];
-    fetchCombinedData(devices);
+function showmainpower() {
+    showDevicePower('main');
+}
+
+
+
 
 //  defining the logout function
-function logout() { window.location.href = 'index.html'; }
+function logout() {window.location.href = 'index.html';}
 
-document.getElementById('loginForm')?.addEventListener('submit', function(event) {
-    event.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    document.getElementById('loginForm')?.addEventListener('submit', function(event) 
+    {event.preventDefault(); const username = document.getElementById('username').value;
+                             const password = document.getElementById('password').value;
 
-    if (username === 'admin' && password === 'admin') {
-        window.location.href = 'dashboard.html';
-    } else {
-        alert('Invalid User Credentials');
-    }
-});
+    if (username === 'admin' && password === 'admin')    
+         {window.location.href = 'dashboard.html';} 
+    else 
+         {alert('Invalid User Credentials');}});
+
+
+
