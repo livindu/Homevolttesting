@@ -1,142 +1,91 @@
-    // Replace with your Google Sheets API key
+// Replace with your Google Sheets API key and ID
 const apiKey = 'AIzaSyCJUpx3d2aRxgOnbbB73WBpcZ1oI2YAauc';
-// Replace with your Google Sheets ID
 const sheetId = '14g5GswUj6mj411o2dYOPghzJthp97hfz5DZvOU3O5Ww';
-// Specify the range of data you want to fetch (e.g., A1:B10)
-const range = 'Sheet1!A1:B29';
+// Specify the range of data you want to fetch for voltage and current
+const rangeVoltageCurrent = 'Sheet1!A1:B1'; // Assuming voltage is in A2 and current is in B2
 
 document.addEventListener('DOMContentLoaded', function() {
-    fetchSheetData();
-    document.getElementById('mainBtn')?.addEventListener('click', showmainpower);
+    fetchVoltageCurrentData();
 });
 
-// Function to fetch data from Google Sheet using Google Sheets API
-function fetchSheetData() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
+// Function to fetch voltage and current data from Google Sheet
     
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            const parsedData = processSheetData(data);
-            updateStatus(parsedData);
-        })
-        .catch(error => console.error('Error fetching data:', error));
-}
+        function fetchVoltageCurrentData() {
+            const voltageCurrentUrl = 'https://docs.google.com/spreadsheets/d/14g5GswUj6mj411o2dYOPghzJthp97hfz5DZvOU3O5Ww/pub?output=csv';
+            fetch(voltageCurrentUrl)
+                .then(response => response.text())
+                .then(data => {
+                    const jsonData = JSON.parse(data.substring(47).slice(0, -2));
+                    const rows = jsonData.table.rows;
 
-// Function to process Google Sheets data
-function processSheetData(data) {
-    const rows = data.values;
-    let voltage = 0.0;
-    let current = 0.0;
+                    const voltage = rows[0].c[0].v;
+                    const current = rows[0].c[1].v;
 
-    // Assuming the first row contains headers and the second row contains the latest data
-    if (rows.length > 1) {
-        const latestRow = rows[1];
-        voltage = parseFloat(latestRow[0]); // Adjust the index based on your sheet structure
-        current = parseFloat(latestRow[1]); // Adjust the index based on your sheet structure
-    }
-
-    return { voltage, current };
-}
-
-// Function to update the status display
-function updateStatus(data) {
-    document.getElementById('voltage').innerText = `${data.voltage} V`;
-    document.getElementById('current').innerText = `${data.current} A`;
-}
-
-// Existing functions for chart updates
-function fetchdata(device) {
-    fetch('https://docs.google.com/spreadsheets/d/1sAMNYYz1C2wIRcYA9RqKjKGprR3Lu6DLK0xBm-Rg4EA/pub?output=csv')
-        .then(response => response.text())
-        .then(data => { 
-            const parsedData = processCSV(data, device);
-            updateChart(parsedData, device); 
-        })
-        .catch(error => console.error('Error fetching data:', error));
-}
-
-function processCSV(data, device) {
-    const rows = data.split('\n');
-    const headers = rows[0].split(',');
-    const time = [];
-    const power = [];
-    
-    const timeIndex = headers.indexOf('time');
-    const devicePowerIndex = headers.indexOf(device + '_power');
-
-    rows.slice(1).forEach(row => {
-        const cols = row.split(',');
-        if (cols.length > timeIndex && cols.length > devicePowerIndex) {
-            time.push(cols[timeIndex]);
-            power.push(parseFloat(cols[devicePowerIndex]));
+                    document.getElementById('voltage').innerText = voltage + ' V';
+                    document.getElementById('current').innerText = current + ' A';
+                });
         }
-    });
 
-    return { time, power };
-}
 
-function updateChart(data, device) {
-    const ctx = document.getElementById('powerChart').getContext('2d');
-    if (window.myChart) {
-        window.myChart.destroy();
-    }
+// Function to fetch power consumption data
+        function fetchPowerData() {
+            const powerDataUrl = 'YOUR_POWER_GRAPH_SHEET_URL';
+            fetch(powerDataUrl)
+                .then(response => response.text())
+                .then(data => {
+                    const jsonData = JSON.parse(data.substring(47).slice(0, -2));
+                    const rows = jsonData.table.rows;
 
-    const xMin = Math.min(...data.time.map(t => parseInt(t.split(':')[0]))); 
-    const xMax = Math.max(...data.time.map(t => parseInt(t.split(':')[10]))); 
-    const yMin = 0; 
-    const yMax = Math.max(...data.power) * 1.2; 
+                    const labels = rows.map(row => row.c[0].v); // Assuming time in column 0
+                    const mainPower = rows.map(row => row.c[1].v); // Main power in column 1
+                    const device1 = rows.map(row => row.c[2].v); // Device 1 in column 2
+                    const device2 = rows.map(row => row.c[3].v); // Device 2 in column 3
+                    const device3 = rows.map(row => row.c[4].v); // Device 3 in column 4
+                    const device4 = rows.map(row => row.c[5].v); // Device 4 in column 5
 
-    window.myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.time,
-            datasets: [{
-                label: `${device.charAt(0).toUpperCase() + device.slice(1)} Power Consumption`,
-                data: data.power,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Time (s)'
-                    },
-                    min: xMin,
-                    max: xMax
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Power (W)'
-                    },
-                    min: yMin,
-                    max: yMax
-                }
+                    powerChart.data.labels = labels;
+                    powerChart.data.datasets[0].data = mainPower;
+                    powerChart.data.datasets[1].data = device1;
+                    powerChart.data.datasets[2].data = device2;
+                    powerChart.data.datasets[3].data = device3;
+                    powerChart.data.datasets[4].data = device4;
+                    powerChart.update();
+                });
+        }
+
+        // Initialize Chart.js
+        const ctx = document.getElementById('powerChart').getContext('2d');
+        const powerChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], // Time labels will be updated dynamically
+                datasets: [
+                    { label: 'Main Power', borderColor: 'rgba(0, 128, 128, 1)', data: [] },
+                    { label: 'Device 1', borderColor: 'rgba(255, 99, 132, 1)', data: [] },
+                    { label: 'Device 2', borderColor: 'rgba(54, 162, 235, 1)', data: [] },
+                    { label: 'Device 3', borderColor: 'rgba(255, 206, 86, 1)', data: [] },
+                    { label: 'Device 4', borderColor: 'rgba(153, 102, 255, 1)', data: [] }
+                ]
             },
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
+            options: {
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Time (24 Hours)' }
+                    },
+                    y: {
+                        min: 0,
+                        max: 230,
+                        title: { display: true, text: 'Power (W)' }
+                    }
+                }
+            }
+        });
 
-function showDevicePower(device) {
-    document.getElementById('deviceIframe').style.display = 'none';
-    document.getElementById('powerChart').style.display = 'block';
-    document.getElementById('chartTitle').style.display = 'block';
-    document.getElementById('chartTitle').innerText = `${device.charAt(0).toUpperCase() + device.slice(1)} Power Consumption`;
-    fetchdata(device);
-}
-
-function showmainpower() {
-    showDevicePower('main');
-}
-
+        // Update both voltage/current and power data regularly
+        fetchVoltageCurrentData();
+        fetchPowerData();
+        setInterval(fetchVoltageCurrentData, 60000); // Fetch every minute
+        setInterval(fetchPowerData, 60000); // Fetch every minute
 
 
 
