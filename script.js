@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to fetch power consumption data
         function fetchPowerData() {
-            const powerDataUrl = 'YOUR_POWER_GRAPH_SHEET_URL';
+            const powerDataUrl = 'https://docs.google.com/spreadsheets/d/1sAMNYYz1C2wIRcYA9RqKjKGprR3Lu6DLK0xBm-Rg4EA/pub?output=csv';
             fetch(powerDataUrl)
                 .then(response => response.text())
                 .then(data => {
