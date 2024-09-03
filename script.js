@@ -1,105 +1,117 @@
-// Replace with your Google Sheets API key and ID
-const apiKey = 'AIzaSyCJUpx3d2aRxgOnbbB73WBpcZ1oI2YAauc';
-const sheetId = '14g5GswUj6mj411o2dYOPghzJthp97hfz5DZvOU3O5Ww';
-// Specify the range of data you want to fetch for voltage and current
-const rangeVoltageCurrent = 'Sheet1!A1:B1'; // Assuming voltage is in A2 and current is in B2
+
+
+const apiKey = 'AIzaSyCJUpx3d2aRxgOnbbB73WBpcZ1oI2YAauc'; 
+
+const sheetId1 = '14g5GswUj6mj411o2dYOPghzJthp97hfz5DZvOU3O5Ww'; 
+const sheetId2 = '1sAMNYYz1C2wIRcYA9RqKjKGprR3Lu6DLK0xBm-Rg4EA'; 
+
 
 document.addEventListener('DOMContentLoaded', function() {
-    fetchVoltageCurrentData();
+    
+
+    // fetch data  sheet 1
+function fetchVoltageCurrentData() {
+    const sheetId = '14g5GswUj6mj411o2dYOPghzJthp97hfz5DZvOU3O5Ww';
+    const voltageCurrentUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv`;
+    
+    fetch(voltageCurrentUrl)
+        .then(response => response.text())
+        .then(data => {
+            const [header, values] = data.split('\n');
+            const [voltage, current] = values.split(',');
+
+            // Display voltage and cuurent boxes
+            document.getElementById('voltage').innerText = `${voltage} V`;
+            document.getElementById('current').innerText = `${current} A`;
+        })
+        .catch(error => console.error('Error fetching voltage/current data:', error));
+}
+
+
+//  fetch data sheet2
+function fetchPowerData() {
+    const sheetId = '1sAMNYYz1C2wIRcYA9RqKjKGprR3Lu6DLK0xBm-Rg4EA'; 
+
+    const powerDataUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv`;
+    
+    fetch(powerDataUrl)
+        .then(response => response.text())
+        .then(data => {
+            const rows = data.split('\n').slice(1); 
+            const labels = [];
+            const mainPower = [];
+            const device1 = [];
+            const device2 = [];
+            const device3 = [];
+            const device4 = [];
+
+            rows.forEach(row => {
+                const [time, main, dev1, dev2, dev3, dev4] = row.split(',');
+
+                labels.push(time);
+                mainPower.push(parseFloat(main));
+                device1.push(parseFloat(dev1));
+                device2.push(parseFloat(dev2));
+                device3.push(parseFloat(dev3));
+                device4.push(parseFloat(dev4));
+            });
+
+            updatePowerChart(labels, mainPower, device1, device2, device3, device4);
+        })
+        .catch(error => console.error('Error fetching power data:', error));
+}
+
 });
 
-// Function to fetch voltage and current data from Google Sheet
-    
-        function fetchVoltageCurrentData() {
-            const voltageCurrentUrl = 'https://docs.google.com/spreadsheets/d/14g5GswUj6mj411o2dYOPghzJthp97hfz5DZvOU3O5Ww/pub?output=csv';
-            fetch(voltageCurrentUrl)
-                .then(response => response.text())
-                .then(data => {
-                    const jsonData = JSON.parse(data.substring(47).slice(0, -2));
-                    const rows = jsonData.table.rows;
-
-                    const voltage = rows[0].c[0].v;
-                    const current = rows[0].c[1].v;
-
-                    document.getElementById('voltage').innerText = voltage + ' V';
-                    document.getElementById('current').innerText = current + ' A';
-                });
-        }
 
 
-// Function to fetch power consumption data
-        function fetchPowerData() {
-            const powerDataUrl = 'https://docs.google.com/spreadsheets/d/1sAMNYYz1C2wIRcYA9RqKjKGprR3Lu6DLK0xBm-Rg4EA/pub?output=csv';
-            fetch(powerDataUrl)
-                .then(response => response.text())
-                .then(data => {
-                    const jsonData = JSON.parse(data.substring(47).slice(0, -2));
-                    const rows = jsonData.table.rows;
 
-                    const labels = rows.map(row => row.c[0].v); // Assuming time in column 0
-                    const mainPower = rows.map(row => row.c[1].v); // Main power in column 1
-                    const device1 = rows.map(row => row.c[2].v); // Device 1 in column 2
-                    const device2 = rows.map(row => row.c[3].v); // Device 2 in column 3
-                    const device3 = rows.map(row => row.c[4].v); // Device 3 in column 4
-                    const device4 = rows.map(row => row.c[5].v); // Device 4 in column 5
 
-                    powerChart.data.labels = labels;
-                    powerChart.data.datasets[0].data = mainPower;
-                    powerChart.data.datasets[1].data = device1;
-                    powerChart.data.datasets[2].data = device2;
-                    powerChart.data.datasets[3].data = device3;
-                    powerChart.data.datasets[4].data = device4;
-                    powerChart.update();
-                });
-        }
-
-        // Initialize Chart.js
-        const ctx = document.getElementById('powerChart').getContext('2d');
-        const powerChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [], // Time labels will be updated dynamically
-                datasets: [
-                    { label: 'Main Power', borderColor: 'rgba(0, 128, 128, 1)', data: [] },
-                    { label: 'Device 1', borderColor: 'rgba(255, 99, 132, 1)', data: [] },
-                    { label: 'Device 2', borderColor: 'rgba(54, 162, 235, 1)', data: [] },
-                    { label: 'Device 3', borderColor: 'rgba(255, 206, 86, 1)', data: [] },
-                    { label: 'Device 4', borderColor: 'rgba(153, 102, 255, 1)', data: [] }
-                ]
-            },
-            options: {
-                scales: {
-                    x: {
-                        title: { display: true, text: 'Time (24 Hours)' }
-                    },
-                    y: {
-                        min: 0,
-                        max: 230,
-                        title: { display: true, text: 'Power (W)' }
-                    }
+function updatePowerChart(labels, mainPower, device1, device2, device3, device4) {
+    const ctx = document.getElementById('powerChart').getContext('2d');
+    const powerChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels, // Time labels
+            datasets: [
+                { label: 'Main Power', borderColor: 'rgba(0, 128, 128, 1)', data: mainPower },
+                { label: 'Device 1', borderColor: 'rgba(255, 99, 132, 1)', data: device1 },
+                { label: 'Device 2', borderColor: 'rgba(54, 162, 235, 1)', data: device2 },
+                { label: 'Device 3', borderColor: 'rgba(255, 206, 86, 1)', data: device3 },
+                { label: 'Device 4', borderColor: 'rgba(153, 102, 255, 1)', data: device4 }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: { display: true, text: 'Time (24 Hours)' }
+                },
+                y: {
+                    min: 0,
+                    max: 230,
+                    title: { display: true, text: 'Power (W)' }
                 }
             }
-        });
-
-        // Update both voltage/current and power data regularly
-        fetchVoltageCurrentData();
-        fetchPowerData();
-        setInterval(fetchVoltageCurrentData, 60000); // Fetch every minute
-        setInterval(fetchPowerData, 60000); // Fetch every minute
+        }
+    });
+}
 
 
+// Logout function
+function logout() {
+    window.location.href = 'index.html';
+}
 
-//  defining the logout function
-function logout() {window.location.href = 'index.html';}
+// login form 
+document.getElementById('loginForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
 
-    document.getElementById('loginForm')?.addEventListener('submit', function(event) 
-    {event.preventDefault(); const username = document.getElementById('username').value;
-                             const password = document.getElementById('password').value;
-
-    if (username === 'admin' && password === 'admin')    
-         {window.location.href = 'dashboard.html';} 
-    else 
-         {alert('Invalid User Credentials');}});
-
-
+    if (username === 'admin' && password === 'admin') {
+        window.location.href = 'dashboard.html';
+    } else {
+        alert('Invalid User Credentials');
+    }
+});
 
